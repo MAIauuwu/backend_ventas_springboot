@@ -1,0 +1,7 @@
+* text=auto eol=lf
+
+Dockerfile eol=lf
+*.sh eol=lf
+mvnw eol=lf
+docker-compose.yml eol=lf
+.env eol=lf
