@@ -43,7 +43,7 @@ jobs:
             echo "DB_NAME=bd_ventas" >> .env
             echo "DB_USERNAME=user_ventas" >> .env
             echo "DB_PASSWORD=ventas1234$" >> .env
-            docker pull rodribaeza/ventas-backend:latest
+            docker pull ${{ secrets.DOCKERHUB_USERNAME }}/ventas-backend:latest
             docker compose down back-ventas
             docker compose up -d back-ventas
             docker image prune -f
