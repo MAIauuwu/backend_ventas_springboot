@@ -1,0 +1,49 @@
+name: CI/CD - Ventas Innovatech
+
+on:
+  push:
+    branches:
+      - deploy
+
+jobs:
+  build-and-deploy:
+    name: Build, Push & deploy
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout codigo
+        uses: actions/checkout@v4
+
+      - name: Login en docker hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+        
+      - name: Build y push imagen docker
+        uses: docker/build-push-action@v5
+        with:
+          context: ./Springboot-API-REST
+          file: ./Springboot-API-REST/Dockerfile
+          push: true
+          tags: ${{ secrets.DOCKERHUB_USERNAME }}/ventas-backend:latest
+
+      - name: Deploy en EC2
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.EC2_HOST_VENTAS }}
+          username: ${{ secrets.EC2_USER }}
+          key: ${{ secrets.EC2_SSH_KEY_VENTAS }} 
+          proxy_host: ${{ secrets.FRONTEND_HOST }}
+          proxy_username: ${{ secrets.EC2_USER }}
+          proxy_key: ${{ secrets.FRONTEND_SSH_KEY }}
+          script: |
+            cd ~/back-ventas/Springboot-API-REST
+            echo "MYSQL_ROOT_PASSWORD=Pass1234$" > .env
+            echo "DB_NAME=bd_ventas" >> .env
+            echo "DB_USERNAME=user_ventas" >> .env
+            echo "DB_PASSWORD=ventas1234$" >> .env
+            docker pull rodribaeza/ventas-backend:latest
+            docker compose down back-ventas
+            docker compose up -d back-ventas
+            docker image prune -f
